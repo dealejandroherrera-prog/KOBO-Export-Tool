@@ -62,6 +62,21 @@ html{scroll-padding-bottom:calc(var(--action-bar-height) + 20px)}
 @media(max-width:760px){.wrap{padding:8px 12px calc(var(--action-bar-height) + 16px)}.titlebar{gap:8px;margin-bottom:4px}.titlebar h1{font-size:17px}.titlebar .subtitle{font-size:11px}.bookworkspace{display:flex;gap:12px}.bookworkspace .chapterOverview{max-height:180px;padding:12px}.chapterOverview .stattotal{padding-bottom:8px}.chapterOverview .stathead{margin:10px 0 4px}.toptools{margin:6px 0 12px;gap:8px}.toptools .filebtn{font-size:12px;padding:9px}.bottom{padding:4px 10px calc(4px + env(safe-area-inset-bottom))}.dock{gap:6px}.dockscroll,#bookTools,#mergeBar{gap:6px}.bottom button,.bottom .selectall,.bottom .pill{padding:8px 10px}.bottom #export{min-width:90px}.selectsurface{padding:15px}.markingsHeader h2{font-size:15px}}
 @media(min-width:520px) and (max-width:760px){#workspace:not(.bookworkspace) #list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:519px){#workspace:not(.bookworkspace) #list{grid-template-columns:minmax(0,1fr)}.bookrow{min-height:146px}.coverpick{min-height:100px}}
+
+/* v8: favorite state and separate export selection indicator. */
+.highlight{position:relative}
+.highlight .selectsurface{padding-right:64px}
+.favoritebutton{position:absolute;top:8px;right:8px;width:44px;height:44px;min-height:44px;padding:0;border:1px solid transparent;background:transparent;color:#6b746e;font-size:29px;line-height:1;display:grid;place-items:center;border-radius:50%}
+.favoritebutton:hover{background:#ffffff90}.favoritebutton.liked{color:#a24060}.favoritebutton:focus-visible{outline:3px solid #b17720;outline-offset:-2px}
+.highlight.isfavorite{background:#fbf0f3;border-color:#dec4ce;box-shadow:none}
+.highlight.isfavorite.isselected{background:#f6e4eb;border-color:#719480;box-shadow:inset 4px 0 var(--accent)}
+.highlight.isfavorite.mergeidle{background:#fbf0f3;border-color:#dec4ce;box-shadow:none}
+.highlight.mergechosen,.highlight.isfavorite.mergechosen{background:#f7edda;border-color:#b38338;box-shadow:inset 4px 0 #b38338}
+#entryFilter{font:inherit;font-size:12px;min-height:44px;max-width:180px;padding:8px 28px 8px 11px;border:1px solid var(--line);border-radius:10px;color:var(--ink);background:var(--paper);cursor:pointer}
+#entryFilter.active{background:#e4eee0;border-color:#86a38b}#entryFilter:focus-visible{outline:3px solid #b17720;outline-offset:-3px}
+@media(max-width:760px){.highlight .selectsurface{padding-right:62px}}
+
+#bookMergeDialog{width:min(94vw,800px)}#bookSources{display:grid;gap:8px;margin:16px 0}.sourcebrief{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;overflow-wrap:anywhere}.sourcebrief p{margin:5px 0;color:var(--sub)}.fieldcompare{border:1px solid var(--line);border-radius:12px;margin:14px 0;padding:12px}.fieldcompare legend{font-weight:650;font-size:14px}.fieldoption{display:flex;gap:10px;align-items:flex-start;min-height:44px;padding:9px 4px;font-size:14px;cursor:pointer}.fieldoption input{margin-top:4px;accent-color:var(--accent)}.fieldoption span{overflow-wrap:anywhere}.fieldoption small{display:block;color:var(--sub);margin-top:5px}.bookmergepreview{background:#e9f0e8;border-radius:12px;padding:16px;overflow-wrap:anywhere}.bookmergepreview h3{font-size:12px;text-transform:uppercase;margin:0 0 12px}.bookmergepreview p{font-size:14px}.sourcecaption{font-size:11px;color:var(--sub);margin:0 0 8px}.bookmergecount{font-size:11px;color:var(--accent)}#bookMergeAccept{width:100%;margin-top:12px;position:sticky;bottom:0}#bookMergeError{color:#96354c;font-size:13px}
 </style></head><body>
 <main class="wrap"><div class="titlebar"><button id="back" hidden aria-label="Zur Bibliothek">‹ Bücher</button><div class="titletext"><h1 id="title">Bücher</h1><p id="subtitle" class="subtitle" hidden></p></div><div id="counter" class="librarycount"></div></div>
 <div class="toptools">
@@ -81,21 +96,24 @@ html{scroll-padding-bottom:calc(var(--action-bar-height) + 20px)}
 <noscript>Diese Anwendung benötigt JavaScript. Öffne die bereitgestellte Seite in Safari, nicht in einer Dateivorschau.</noscript>
 </main><footer id="actionBar" class="bottom"><div class="dock">
 <div class="dockscroll" tabindex="0" role="group" aria-label="Auswahl und Filter, seitlich scrollbar">
+<div id="mergeBar" hidden><button id="mergeMode">Verbinden</button><button id="mergePreview" class="primary" hidden>Verbinden …</button></div>
+<button id="mergeBooks">Bücher zusammenführen</button><button id="splitBooks" hidden>Zusammenführung lösen</button>
 <span id="selectionCount" class="selectioncount" role="status" aria-live="polite"></span>
 <button id="selectAll" class="selectall">Alle auswählen</button>
-<div id="bookTools" hidden><button id="notesOnly" class="pill" aria-pressed="false">Mit eigener Notiz</button></div>
-<div id="mergeBar" hidden><button id="mergeMode">Verbinden</button><button id="mergePreview" class="primary" hidden>Verbinden …</button></div>
+<div id="bookTools" hidden><select id="entryFilter" aria-label="Markierungen filtern"><option value="all">Alle</option><option value="favorites">Favoriten</option><option value="notes">Mit eigener Notiz</option></select></div>
+
 <button id="clear" disabled>Löschen</button>
 </div><button id="export" disabled>Exportieren</button>
 </div></footer>
 <dialog id="dialog" aria-labelledby="exportTitle"><div class="dialoghead"><h2 id="exportTitle">Dein Markdown</h2><button id="closeDialog" aria-label="Export schließen">Schließen</button></div><p id="exportName" class="small"></p><textarea id="preview" readonly aria-label="Markdown-Vorschau" spellcheck="false"></textarea><div class="actions"><button id="share" class="primary" hidden>Teilen / Dateien</button><button id="download" class="primary">Datei speichern</button><button id="copy">Text kopieren</button></div><p id="exportStatus" class="status" role="status"></p></dialog>
 <dialog id="mergeDialog" aria-labelledby="mergeHeading"><div class="dialoghead"><h2 id="mergeHeading">Markierungen verbinden</h2><button id="mergeCancel">Abbrechen</button></div><p id="mergeSummary" class="small"></p><label class="joinLabel" for="mergeSeparator">Zwischen den Textteilen</label><select id="mergeSeparator"><option value="space">Leerzeichen – ein Absatz</option><option value="line">Zeilenumbruch</option></select><blockquote id="mergeText"></blockquote><div id="mergeNotes"></div><p id="mergeError" role="alert" class="status"></p><button id="mergeConfirm" class="primary">Als einen Eintrag verbinden</button></dialog>
 
+<dialog id="bookMergeDialog" aria-labelledby="bookMergeHeading"><div class="dialoghead"><h2 id="bookMergeHeading">Bücher zusammenführen</h2><button id="bookMergeCancel">Abbrechen</button></div><div id="bookSources"></div><div id="bookFields"></div><section class="bookmergepreview"><h3>Neuer Steckbrief</h3><strong id="bookResultTitle"></strong><p id="bookResultAuthor"></p><p id="bookResultCount"></p></section><p class="small">Alle Zitate und Notizen bleiben erhalten. Gleichlautende Zitate werden nicht automatisch gelöscht. Kapitel bleiben nach Quelle getrennt.</p><p id="bookMergeError" role="alert"></p><button id="bookMergeAccept" class="primary">Akzeptieren</button></dialog>
 <script>
 const $=id=>document.getElementById(id), STORE='kobo-notes-browser-v1';
 let books=[],excluded=new Set(),active=null,mode='',busy=false,exportText='',exportName='Kobo-Notizen.md';
 let mergeMode=false, mergeSelection=new Set(), importDiagnostics=null;
-let selectedBooks=new Set(), seenBooks=new Set(), newBooks=new Set(), notesOnly=false, activeChapter=null;
+let selectedBooks=new Set(), seenBooks=new Set(), newBooks=new Set(), entryFilter='all', activeChapter=null, favorites=new Set();
 
 function koboDate(raw){
  if(!raw)return 'Datum unbekannt';
@@ -130,11 +148,12 @@ function chapterTitle(title){return (title||'').replace(/^\s*Kapitel\s+\d+\s*[:.
 function chapterGroups(book,selected=false){
  const groups=new Map();
  for(const h of book.highlights){
-  const key=h.chapterKey||h.chapter||'__unknown__';
-  if(!groups.has(key))groups.set(key,{key,title:chapterTitle(h.chapter),order:h.chapterOrder??null,items:[],first:groups.size});
+  const key=chapterKey(h);
+  if(!groups.has(key))groups.set(key,{key,title:(h.originBookTitle?h.originBookTitle+' · ':'')+chapterTitle(h.chapter),sourceOrder:h.originBookOrder??0,order:h.chapterOrder??null,items:[],first:groups.size});
   groups.get(key).items.push(h);
  }
  const sorted=[...groups.values()].sort((a,b)=>{
+  if(a.sourceOrder!==b.sourceOrder)return a.sourceOrder-b.sourceOrder;
   if(a.order!==null&&b.order!==null&&a.order!==b.order)return a.order-b.order;
   if(a.order!==null&&b.order===null)return -1;if(b.order!==null&&a.order===null)return 1;
   return a.first-b.first;
@@ -157,7 +176,13 @@ function organizeBook(book){book.highlights=chapterGroups(book).flatMap(g=>g.ite
 
 
 function originals(h){return Array.isArray(h.mergeParts)&&h.mergeParts.length?h.mergeParts.flatMap(originals):[h];}
-function chapterIdentity(h){return h.chapterKey||h.contentID||h.chapter||'';}
+function chapterIdentity(h){const k=h.chapterKey||h.contentID||h.chapter||'';return k&&h.originBookID?JSON.stringify([h.originBookID,k]):k;}
+
+// Store favorite flags by source bookmark ID: merged records retain the originals.
+function favoriteKeys(h){return [...new Set(originals(h).flatMap(p=>p.sourceIDs?.length?p.sourceIDs:[p.id]))];}
+function isFavorite(h){return favoriteKeys(h).some(id=>favorites.has(id));}
+function setFavorite(h,value){favoriteKeys(h).forEach(id=>value?favorites.add(id):favorites.delete(id));}
+
 function dateLabel(h){
  if(!h.mergeParts)return koboDate(entryDate(h));
  return [...new Set(originals(h).map(part=>koboDate(entryDate(part))))].join(' / ');
@@ -224,7 +249,7 @@ function updateMergePreview(){
 }
 // Retain confirmed groups on import only if all their original entries are still
 // present and contiguous in the same chapter. Changed/missing ranges stay separate.
-function acceptImport(imported){
+function acceptSourceImport(imported){
  for(const b of books)if(mode!=='demo')seenBooks.add(b.id);
  newBooks=new Set(imported.filter(b=>!seenBooks.has(b.id)).map(b=>b.id));
  imported.forEach(b=>seenBooks.add(b.id));
@@ -249,6 +274,117 @@ function acceptImport(imported){
 }
 
 
+
+let bookMergeDraft=null;
+function cleanOrigin(h){
+ const copy=structuredClone(h);
+ delete copy.originBookID;delete copy.originBookTitle;delete copy.originBookOrder;
+ if(copy.mergeParts)copy.mergeParts=copy.mergeParts.map(cleanOrigin);
+ return copy;
+}
+function sourceBooks(book){
+ if(!book.bookSources)return [structuredClone(book)];
+ return book.bookSources.map(src=>({...structuredClone(src),highlights:book.highlights.filter(h=>h.originBookID===src.id).map(cleanOrigin)}));
+}
+function attachOrigin(h,src,order){
+ const copy=structuredClone(h);copy.originBookID=src.id;copy.originBookTitle=src.title;copy.originBookOrder=order;
+ if(copy.mergeParts)copy.mergeParts=copy.mergeParts.map(p=>attachOrigin(p,src,order));
+ return copy;
+}
+function buildBookGroup(sources,choice,id){
+ if(sources.length<2)throw Error('Mindestens zwei Quellen erforderlich.');
+ if(new Set(sources.map(b=>b.id)).size!==sources.length)throw Error('Eine Quelle ist mehrfach enthalten.');
+ if(!sources.some(b=>b.id===choice.titleSource)||!sources.some(b=>b.id===choice.authorSource))throw Error('Bitte Titel und Autor aus den Quellen auswählen.');
+ const title=String(choice.title??'').trim();if(!title)throw Error('Bitte einen nicht leeren Titel auswählen.');
+ const keys=sources.flatMap(b=>b.highlights.map(h=>h.id));
+ if(new Set(keys).size!==keys.length)throw Error('Doppelte Eintrags-IDs in den Quellen. Zusammenführung ohne Datenverlust nicht eindeutig möglich.');
+ return organizeBook({id:id||'book-group:'+crypto.randomUUID(),title,author:String(choice.author??''),
+  bookSources:sources.map(b=>({id:b.id,title:b.title,author:b.author})),bookChoices:{...choice,title},
+  highlights:sources.flatMap((src,i)=>src.highlights.map(h=>attachOrigin(h,src,i)))});
+}
+function replaceBooksWithGroup(selected,group){
+ const ids=new Set(selected.map(b=>b.id));const index=books.findIndex(b=>ids.has(b.id));
+ books=books.filter(b=>!ids.has(b.id));books.splice(index,0,group);
+ const isNew=selected.some(b=>newBooks.has(b.id));ids.forEach(id=>{selectedBooks.delete(id);newBooks.delete(id);});
+ selectedBooks.add(group.id);if(isNew)newBooks.add(group.id);
+}
+function openBookMerge(){
+ const selected=books.filter(b=>selectedBooks.has(b.id));if(busy||selected.length<2)return;
+ const sources=selected.flatMap(sourceBooks);
+ bookMergeDraft={selectedIDs:selected.map(b=>b.id),sources,titleSource:null,authorSource:null};
+ $('bookMergeError').textContent='';$('bookSources').replaceChildren();$('bookFields').replaceChildren();
+ for(const [i,b] of sources.entries()){
+  const card=node('section','sourcebrief');card.append(node('strong','',`Quelle ${i+1}: ${b.title}`),node('p','',b.author||'Autor nicht angegeben'),node('p','',`${b.highlights.length} Einträge`));$('bookSources').append(card);
+ }
+ for(const [key,label] of [['title','Titel'],['author','Autor']]){
+  const field=node('fieldset','fieldcompare');const same=new Set(sources.map(b=>String(b[key]||'').trim())).size===1;
+  field.append(node('legend','',label+(same?' · übereinstimmend':' · unterschiedlich')));
+  // Only preselect identical metadata; discrepancies require an explicit choice.
+  if(same)bookMergeDraft[key+'Source']=sources[0].id;
+  sources.forEach((b,i)=>{
+   const row=node('label','fieldoption'),input=node('input');input.type='radio';input.name='bookfield-'+key;input.value=b.id;input.checked=same&&i===0;
+   if(key==='title'&&!b.title.trim())input.disabled=true;
+   input.onchange=()=>{bookMergeDraft[key+'Source']=b.id;updateBookMergePreview();};
+   const value=node('span','',b[key]||'Nicht angegeben');value.append(node('small','',`Quelle ${i+1} · ${b.title}`));row.append(input,value);field.append(row);
+  });$('bookFields').append(field);
+ }
+ updateBookMergePreview();$('bookMergeDialog').showModal();
+}
+function draftChoice(){
+ const d=bookMergeDraft;if(!d)return null;
+ const t=d.sources.find(b=>b.id===d.titleSource),a=d.sources.find(b=>b.id===d.authorSource);
+ return t&&a&&t.title.trim()?{titleSource:t.id,authorSource:a.id,title:t.title,author:a.author}:null;
+}
+function updateBookMergePreview(){
+ const d=bookMergeDraft;if(!d)return;const c=draftChoice();
+ $('bookResultTitle').textContent=d.sources.find(b=>b.id===d.titleSource)?.title||'Titel auswählen';
+ $('bookResultAuthor').textContent=d.authorSource===null?'Autor auswählen':(d.sources.find(b=>b.id===d.authorSource)?.author||'Autor nicht angegeben');
+ $('bookResultCount').textContent=`${d.sources.length} Quellen · ${d.sources.reduce((n,b)=>n+b.highlights.length,0)} Einträge zusammen`;
+ $('bookMergeAccept').disabled=!c||busy;
+}
+function restoreLibraryState(old){books=old.books;selectedBooks=old.selected;newBooks=old.newBooks;}
+function commitBookMerge(){
+ const d=bookMergeDraft,c=draftChoice();if(!d||!c||busy)return;
+ try{
+  const selected=d.selectedIDs.map(id=>books.find(b=>b.id===id));if(selected.some(b=>!b))throw Error('Die Buchauswahl hat sich geändert. Bitte erneut öffnen.');
+  const sources=selected.flatMap(sourceBooks),group=buildBookGroup(sources,c);
+  const old={books,selected:new Set(selectedBooks),newBooks:new Set(newBooks)};
+  replaceBooksWithGroup(selected,group);
+  if(!save()){restoreLibraryState(old);throw Error('Nicht gespeichert. Bitte Speicherplatz freigeben; die alten Steckbriefe bleiben erhalten.');}
+  bookMergeDraft=null;$('bookMergeDialog').close();openBook(group);
+ }catch(e){$('bookMergeError').textContent=e.message;}
+}
+function splitBookGroup(book){
+ if(!book?.bookSources)return;
+ const parts=sourceBooks(book),wasSelected=selectedBooks.has(book.id),wasNew=newBooks.has(book.id);
+ const old={books,selected:new Set(selectedBooks),newBooks:new Set(newBooks)};
+ books=books.flatMap(b=>b.id===book.id?parts:[b]);selectedBooks.delete(book.id);newBooks.delete(book.id);
+ parts.forEach(b=>{if(wasSelected)selectedBooks.add(b.id);if(wasNew)newBooks.add(b.id);});
+ if(!save()){restoreLibraryState(old);return;}
+ active=null;activeChapter=null;entryFilter='all';resetMerge();$('search').value='';render();
+}
+// Reimport expands source books for the existing quote merge/update logic, then
+// restores book groups only when all source books are available in the new snapshot.
+function acceptImport(imported){
+ const groups=books.filter(b=>b.bookSources).map(b=>({id:b.id,sources:b.bookSources.map(s=>s.id),choice:b.bookChoices,selected:selectedBooks.has(b.id)}));
+ const selected=new Set(selectedBooks);
+ books=books.flatMap(b=>{const sources=sourceBooks(b);if(b.bookSources){selected.delete(b.id);if(selectedBooks.has(b.id))sources.forEach(s=>selected.add(s.id));}return sources;});
+ selectedBooks=selected;
+ let dissolved=acceptSourceImport(imported);
+ for(const g of groups){
+  const sources=g.sources.map(id=>books.find(b=>b.id===id));
+  if(sources.some(b=>!b)){dissolved++;continue;}
+  const group=buildBookGroup(sources,g.choice,g.id);replaceBooksWithGroup(sources,group);
+  if(!g.selected)selectedBooks.delete(group.id);
+ }
+ return dissolved;
+}
+$('mergeBooks').onclick=openBookMerge;
+$('bookMergeCancel').onclick=()=>{bookMergeDraft=null;$('bookMergeDialog').close();};
+$('bookMergeDialog').addEventListener('cancel',()=>{bookMergeDraft=null;});
+$('bookMergeAccept').onclick=commitBookMerge;
+$('splitBooks').onclick=()=>{if(confirm('Zusammenführung lösen und ursprüngliche Steckbriefe wieder anzeigen?'))splitBookGroup(current());};
+
 function syncActionBar(){
  const height=$('actionBar').getBoundingClientRect().height;
  document.documentElement.style.setProperty('--action-bar-height',`${Math.ceil(height)}px`);
@@ -267,15 +403,15 @@ function atReadingPosition(change){
  window.scrollTo(0,oldY);
 }
 function notify(message){$('status').textContent=message;}
-function save(){try{localStorage.setItem(STORE,JSON.stringify({books,excluded:[...excluded],mode,importDiagnostics,selectedBooks:[...selectedBooks],seenBooks:[...seenBooks],newBooks:[...newBooks]}));return true;}catch{notify('Die lokale Speicherung ist nicht verfügbar oder voll. Bitte exportiere deine Auswahl vor dem Schließen.');return false;}}
+function save(){try{localStorage.setItem(STORE,JSON.stringify({books,excluded:[...excluded],mode,importDiagnostics,selectedBooks:[...selectedBooks],seenBooks:[...seenBooks],newBooks:[...newBooks],favorites:[...favorites]}));return true;}catch{notify('Die lokale Speicherung ist nicht verfügbar oder voll. Bitte exportiere deine Auswahl vor dem Schließen.');return false;}}
 function count(book){return book.highlights.filter(h=>!excluded.has(h.id)).length;}
 function allCount(){return books.reduce((n,b)=>n+count(b),0);}
 function node(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;}
 function current(){return books.find(b=>b.id===active);}
 function matches(h,q){return (h.text+' '+h.note+' '+h.chapter).toLocaleLowerCase('de').includes(q);}
 
-function chapterKey(h){return h.chapterKey||h.chapter||'__unknown__';}
-function visible(){const b=current(),q=$('search').value.trim().toLocaleLowerCase('de');return b?b.highlights.filter(h=>(activeChapter===null||chapterKey(h)===activeChapter)&&matches(h,q)&&(!notesOnly||Boolean(h.note))):[];}
+function chapterKey(h){const k=h.chapterKey||h.chapter||'__unknown__';return h.originBookID?JSON.stringify([h.originBookID,k]):k;}
+function visible(){const b=current(),q=$('search').value.trim().toLocaleLowerCase('de');return b?b.highlights.filter(h=>(activeChapter===null||chapterKey(h)===activeChapter)&&matches(h,q)&&(entryFilter==='all'||(entryFilter==='favorites'?isFavorite(h):Boolean(h.note)))):[];}
 function selectedLibraryBooks(){return books.filter(b=>selectedBooks.has(b.id)&&count(b)>0);}
 function selectWholeBook(book){
  if(selectedBooks.has(book.id)){selectedBooks.delete(book.id);}
@@ -296,7 +432,7 @@ function renderOverview(book){
  for(const g of groups){
   const row=node('button','chapterrow'+(activeChapter===g.key?' active':''));row.type='button';row.disabled=busy;
   row.setAttribute('aria-pressed',String(activeChapter===g.key));row.setAttribute('aria-controls','list');
-  row.onclick=()=>{activeChapter=g.key;mergeSelection.clear();notesOnly=false;$('search').value='';render();$('markingsHeader').scrollIntoView({block:'start'});$('chapterBack').focus({preventScroll:true});};
+  row.onclick=()=>{activeChapter=g.key;mergeSelection.clear();entryFilter='all';$('search').value='';render();$('markingsHeader').scrollIntoView({block:'start'});$('chapterBack').focus({preventScroll:true});};
   row.append(node('span','chaptername',g.title==='Unbekannt'?'Ohne Kapitelzuordnung':g.title),node('strong','chapternumber',String(g.counts.marks)));
   const track=node('div','track'),fill=node('div','fill');fill.style.width=`${g.counts.marks/max*100}%`;track.setAttribute('aria-hidden','true');track.append(fill);row.append(track);el.append(row);
  }
@@ -309,12 +445,14 @@ function controls(){
  $('workspace').classList.toggle('bookworkspace',Boolean(b));$('markingsHeader').hidden=!b;
  const group=b&&activeChapter!==null?chapterGroups(b).find(g=>g.key===activeChapter):null;
  $('markingsTitle').textContent=group?(group.title==='Unbekannt'?'Ohne Kapitelzuordnung':group.title):'Markierungen';
- $('chapterBack').hidden=!b||(activeChapter===null&&!notesOnly&&!$('search').value);
+ $('chapterBack').hidden=!b||(activeChapter===null&&entryFilter==='all'&&!$('search').value);
  $('bookTools').hidden=!b;$('counter').hidden=Boolean(b);$('clear').hidden=Boolean(b);
  $('counter').replaceChildren();if(!b)$('counter').append(node('strong','',String(books.length)),node('span','',books.length===1?'Buch':'Bücher'));
  const enabled=!busy&&(b?count(b)>0:selectedLibraryBooks().length>0);
  $('export').disabled=!enabled;$('export').classList.toggle('primary',enabled);
  $('export').textContent='Exportieren';
+ $('mergeBooks').hidden=Boolean(b);$('mergeBooks').disabled=busy||books.filter(x=>selectedBooks.has(x.id)).length<2;
+ $('splitBooks').hidden=!b?.bookSources;$('splitBooks').disabled=busy;
  $('clear').disabled=busy||!books.length;$('file').disabled=busy;
  const total=b?b.highlights.length:books.length,n=b?count(b):books.filter(book=>selectedBooks.has(book.id)).length;
  $('selectAll').disabled=busy||total===0;
@@ -322,12 +460,12 @@ function controls(){
  $('selectAll').setAttribute('aria-label',b?(n===total?'Alle Einträge dieses Buchs abwählen':'Alle Einträge dieses Buchs auswählen'):(n===total?'Alle Bücher abwählen':'Alle Bücher auswählen'));
  $('selectionCount').textContent=`${n} ausgewählt`;
  $('selectionCount').setAttribute('aria-label',`${n} ${b?'Einträge im gesamten Buch':'Bücher'} ausgewählt`);
- $('notesOnly').classList.toggle('active',notesOnly);$('notesOnly').setAttribute('aria-pressed',String(notesOnly));$('notesOnly').disabled=busy;
+ $('entryFilter').value=entryFilter;$('entryFilter').disabled=busy;$('entryFilter').classList.toggle('active',entryFilter!=='all');
  $('search').placeholder=b?'Markierungen durchsuchen':'Bücher durchsuchen';
  $('search').setAttribute('aria-label',b?'Markierungen, Notizen und Kapitel durchsuchen':'Bücher, Autoren und Notizen durchsuchen');
  updateMergeControls();
 }
-function openBook(book){resetMerge();active=book.id;activeChapter=null;notesOnly=false;$('search').value='';render();window.scrollTo(0,0);}
+function openBook(book){resetMerge();active=book.id;activeChapter=null;entryFilter='all';$('search').value='';render();window.scrollTo(0,0);}
 function render(){
  controls();const list=$('list');list.replaceChildren();const b=current();renderOverview(b);
  if(!books.length){const box=node('section','empty');box.append(node('div','eyebrow','DEIN PERSÖNLICHES LESEARCHIV'),node('h2','','Deine Bücher finden hier Platz.'));list.append(box);return;}
@@ -343,19 +481,20 @@ function render(){
    const open=node('button','bookopen');open.setAttribute('aria-label',book.title+' öffnen');
    const info=node('span','bookinfo'),c=rawCounts(book.highlights);
    info.append(node('strong','',book.title),node('span','author',book.author||'Unbekannte Autorenschaft'),node('span','bookmeta',`${c.marks} Markierungen${c.notes?' · '+c.notes+' Notizen':''}`));
-   open.append(info,node('span','arrow','›'));open.onclick=()=>openBook(book);row.append(cover,open);list.append(row);
+   if(book.bookSources)info.append(node('span','bookmergecount',`${book.bookSources.length} Quellen zusammengeführt`));open.append(info,node('span','arrow','›'));open.onclick=()=>openBook(book);row.append(cover,open);list.append(row);
   }
  }else{
   for(const h of visible()){
    const card=node('article','highlight');card.dataset.entryId=h.id;
    const surface=node('div','selectsurface');surface.setAttribute('role','button');surface.tabIndex=0;
-   const state=node('p','selectionstate');surface.append(state);
+
    const refresh=()=>{
+    card.classList.toggle('isfavorite',isFavorite(h));
     const picked=mergeMode?mergeSelection.has(h.id):!excluded.has(h.id);
     card.classList.toggle('isselected',!mergeMode&&picked);card.classList.toggle('mergechosen',mergeMode&&picked);card.classList.toggle('mergeidle',mergeMode&&!picked);
     surface.setAttribute('aria-pressed',String(picked));surface.setAttribute('aria-disabled',String(busy||(mergeMode&&!h.text.trim())));
     surface.setAttribute('aria-label',mergeMode?'Markierung zum Verbinden auswählen':'Markierung für den Export auswählen');
-    state.textContent=mergeMode?(picked?'Zum Verbinden ausgewählt':(h.text.trim()?'Zum Verbinden auswählen':'Eigenständige Notiz')):(picked?'Ausgewählt':'Nicht ausgewählt');
+
    };
    const toggle=()=>{
     if(busy||(mergeMode&&!h.text.trim()))return;
@@ -365,11 +504,31 @@ function render(){
    };
    surface.onclick=()=>{if(window.getSelection?.()?.toString())return;toggle();};
    surface.onkeydown=e=>{if(e.target===surface&&(e.key===' '||e.key==='Enter')){e.preventDefault();toggle();}};
-   if(h.chapter)surface.append(node('p','chapter',h.chapter));
+   if(h.originBookTitle)surface.append(node('p','sourcecaption',h.originBookTitle));if(h.chapter)surface.append(node('p','chapter',h.chapter));
    surface.append(node('p','date',[locationLabel(h),dateLabel(h)].filter(Boolean).join(' · ')));
    if(h.text)surface.append(node('blockquote','',h.text));
    for(const note of notesFor(h)){const n=node('section','note');n.append(node('p','',note.text));if(notesFor(h).length>1&&note.created)n.append(node('p','date',koboDate(note.created)));surface.append(n);}
    refresh();card.append(surface);
+   const heart=node('button','favoritebutton');heart.type='button';heart.disabled=busy;
+   const refreshHeart=()=>{
+    const liked=isFavorite(h);heart.textContent=liked?'♥':'♡';heart.classList.toggle('liked',liked);
+    heart.setAttribute('aria-pressed',String(liked));heart.setAttribute('aria-label',liked?'Favorit entfernen':'Als Favorit markieren');
+    heart.title=liked?'Favorit entfernen':'Als Favorit markieren';
+   };
+   refreshHeart();
+   heart.onclick=e=>{
+    e.stopPropagation();if(busy)return;
+    setFavorite(h,!isFavorite(h));save();
+    if(entryFilter==='favorites'&&!isFavorite(h)){
+     mergeSelection.delete(h.id);
+     // Focus a surviving heart when a row disappears from Favorites.
+     const cards=[...document.querySelectorAll('#list .highlight')],index=cards.indexOf(card);
+     atReadingPosition(()=>{});
+     const buttons=[...document.querySelectorAll('#list .favoritebutton')];
+     if(buttons.length)buttons[Math.min(Math.max(index,0),buttons.length-1)].focus({preventScroll:true});else $('entryFilter').focus({preventScroll:true});
+    }else{refresh();refreshHeart();}
+   };
+   card.append(heart);
    if(h.mergeParts){card.append(node('p','mergetag',`${originals(h).length} verbundene Markierungen`));const split=node('button','splitbutton','Verbindung lösen');split.disabled=busy;split.onclick=()=>atReadingPosition(()=>{splitMerged(b,h.id);mergeSelection.clear();save();});card.append(split);}
    list.append(card);
   }
@@ -382,9 +541,9 @@ $('mergePreview').onclick=()=>{$('mergeSeparator').value='space';updateMergePrev
 $('mergeSeparator').onchange=updateMergePreview;
 $('mergeCancel').onclick=()=>$('mergeDialog').close();
 $('mergeConfirm').onclick=()=>{try{atReadingPosition(()=>{applyMerge(current(),mergeSelection,$('mergeSeparator').value);resetMerge();save();$('mergeDialog').close();});}catch(e){$('mergeError').textContent=e.message;}};
-$('back').onclick=()=>{resetMerge();active=null;activeChapter=null;notesOnly=false;$('search').value='';render();window.scrollTo(0,0);};
+$('back').onclick=()=>{resetMerge();active=null;activeChapter=null;entryFilter='all';$('search').value='';render();window.scrollTo(0,0);};
 $('search').oninput=()=>{mergeSelection.clear();render();};
-$('notesOnly').onclick=()=>{notesOnly=!notesOnly;mergeSelection.clear();render();};
+$('entryFilter').onchange=()=>{entryFilter=$('entryFilter').value;mergeSelection.clear();render();};
 $('selectAll').onclick=()=>{
  if(busy)return;const b=current();
  atReadingPosition(()=>{
@@ -394,8 +553,8 @@ $('selectAll').onclick=()=>{
   save();
  });
 };
-$('chapterBack').onclick=()=>{activeChapter=null;notesOnly=false;$('search').value='';mergeSelection.clear();render();$('markingsHeader').scrollIntoView({block:'start'});};
-$('clear').onclick=()=>{if(!confirm('Lokale Bibliothek, Auswahl und Importverlauf löschen?'))return;resetMerge();importDiagnostics=null;books=[];excluded.clear();selectedBooks.clear();seenBooks.clear();newBooks.clear();active=null;activeChapter=null;notesOnly=false;mode='';try{localStorage.removeItem(STORE);}catch{}$('search').value='';notify('');render();};
+$('chapterBack').onclick=()=>{activeChapter=null;entryFilter='all';$('search').value='';mergeSelection.clear();render();$('markingsHeader').scrollIntoView({block:'start'});};
+$('clear').onclick=()=>{if(!confirm('Lokale Bibliothek, Auswahl, Favoriten und Importverlauf löschen?'))return;resetMerge();importDiagnostics=null;books=[];excluded.clear();selectedBooks.clear();seenBooks.clear();newBooks.clear();favorites.clear();active=null;activeChapter=null;entryFilter='all';mode='';try{localStorage.removeItem(STORE);}catch{}$('search').value='';notify('');render();};
 function parseAsync(buffer){
  return new Promise((resolve,reject)=>{
   const url=URL.createObjectURL(new Blob(["\nclass SQLiteReader {\n constructor(buffer) {\n  this.b = new Uint8Array(buffer); this.v = new DataView(buffer);\n  if(this.b.length < 100 || new TextDecoder().decode(this.b.slice(0,16)) !== 'SQLite format 3\\0') throw Error('Keine SQLite-Datenbank. Bitte KoboReader.sqlite auswählen.');\n  this.size=this.v.getUint16(16); if(this.size===1) this.size=65536;\n  if(this.size<512 || this.size>65536 || (this.size & (this.size-1))) throw Error('Ungültige SQLite-Seitengröße.');\n  this.usable=this.size-this.b[20]; this.pages=Math.floor(this.b.length/this.size);\n  if(this.b.length % this.size || this.pages<1 || this.usable<480) throw Error('Die Datenbank ist unvollständig oder beschädigt.');\n  const enc=this.v.getUint32(56);\n  if(![1,2,3].includes(enc)) throw Error('Unbekannte Textkodierung.');\n  this.decoder=new TextDecoder({1:'utf-8',2:'utf-16le',3:'utf-16be'}[enc]);\n }\n check(p,n=1){ if(!Number.isSafeInteger(p)||p<0||p+n>this.b.length) throw Error('Unvollständige Datenbank.'); }\n u16(p){this.check(p,2);return this.v.getUint16(p);}\n u32(p){this.check(p,4);return this.v.getUint32(p);}\n page(n){if(!Number.isInteger(n)||n<1||n>this.pages) throw Error('Ungültige Datenbankseite.');return (n-1)*this.size;}\n varint(b,p){let n=0n;for(let i=0;i<9;i++){if(p>=b.length)throw Error('Ungültige Zahl in SQLite.');const c=b[p++];if(i===8)return [n*256n+BigInt(c),p];n=n*128n+BigInt(c&127);if(!(c&128))return [n,p];}throw Error('Ungültige SQLite-Zahl.');}\n number(n){const v=Number(n);if(!Number.isSafeInteger(v)||v<0)throw Error('SQLite-Wert außerhalb des unterstützten Bereichs.');return v;}\n payload(p,count){\n  if(count>this.b.length) throw Error('Ungültige Datensatzgröße.');\n  const max=this.usable-35,min=Math.floor((this.usable-12)*32/255)-23;\n  let local=count;\n  if(count>max){local=min+(count-min)%(this.usable-4);if(local>max)local=min;}\n  const pageEnd=(Math.floor(p/this.size)+1)*this.size-(this.size-this.usable);\n  if(p+local+(count>local?4:0)>pageEnd)throw Error('Beschädigter Datensatz.');\n  this.check(p,local);const result=new Uint8Array(count);result.set(this.b.subarray(p,p+local));\n  let out=local, next=count>local?this.u32(p+local):0;const visited=new Set();\n  while(out<count){if(visited.has(next))throw Error('Zyklische Überlaufseiten.');visited.add(next);let start=this.page(next);next=this.u32(start);let n=Math.min(count-out,this.usable-4);result.set(this.b.subarray(start+4,start+4+n),out);out+=n;}\n  return result;\n }\n record(data){\n  let [h,p]=this.varint(data,0);h=this.number(h);if(h>data.length||h<p)throw Error('Ungültiger Datensatzkopf.');\n  const types=[];while(p<h){let [t,q]=this.varint(data,p);types.push(this.number(t));p=q;}if(p!==h)throw Error('Ungültiger Datensatzkopf.');\n  p=h;const values=[];\n  for(const t of types){\n   let n=t>=12?Math.floor((t-12)/2):({0:0,1:1,2:2,3:3,4:4,5:6,6:8,7:8,8:0,9:0})[t];\n   if(n===undefined||p+n>data.length)throw Error('Ungültiger SQLite-Feldtyp.');\n   let val=null;\n   if(t===8)val=0;else if(t===9)val=1;\n   else if(t>=1&&t<=6){let x=0n;for(let k=0;k<n;k++)x=x*256n+BigInt(data[p+k]);if(data[p]&128)x-=1n<<BigInt(n*8);val=(x>BigInt(Number.MAX_SAFE_INTEGER)||x<BigInt(Number.MIN_SAFE_INTEGER))?x.toString():Number(x);}\n   else if(t===7)val=new DataView(data.buffer,data.byteOffset+p,8).getFloat64(0);\n   else if(t>=13&&(t%2))val=this.decoder.decode(data.subarray(p,p+n));\n   else if(t>=12)val=null; // BLOB fields are not needed for Kobo notes.\n   values.push(val);p+=n;\n  }\n  return values;\n }\n *rows(root){\n  const pending=[Number(root)],seen=new Set();\n  while(pending.length){const pg=pending.pop();if(seen.has(pg))throw Error('Zyklischer Tabellenbaum.');seen.add(pg);\n   const base=this.page(pg),h=base+(pg===1?100:0),kind=this.b[h],count=this.u16(h+3);\n   if(kind!==5&&kind!==13)throw Error('Nicht unterstütztes Tabellenformat (z. B. WITHOUT ROWID).');\n   const hdr=kind===5?12:8;if(h+hdr+2*count>base+this.usable)throw Error('Beschädigter Tabellenkopf.');\n   if(kind===5)pending.push(this.u32(h+8));\n   for(let i=(kind===5?count-1:0);kind===5?i>=0:i<count;kind===5?i--:i++){\n    const offset=this.u16(h+hdr+2*i);if(offset<h+hdr+count*2-base||offset>=this.usable)throw Error('Beschädigte Tabellenzelle.');const p=base+offset;\n    if(kind===5){pending.push(this.u32(p));continue;}\n    let [length,q]=this.varint(this.b,p);let [,s]=this.varint(this.b,q);\n    yield this.record(this.payload(s,this.number(length)));\n   }\n  }\n }\n}\nfunction columnNames(sql){\n if(!sql || /\\bWITHOUT\\s+ROWID\\b/i.test(sql))throw Error('Nicht unterstütztes Kobo-Tabellenformat.');\n const start=sql.indexOf('(');if(start<0)throw Error('Tabellenschema fehlt.');\n const parts=[];let part='',depth=0,quote='';\n for(let i=start+1;i<sql.length;i++){\n  const c=sql[i];\n  if(quote){part+=c;if(c===quote){if(sql[i+1]===quote){part+=sql[++i];}else quote='';}continue;}\n  if(c==='\"'||c===\"'\"||c==='`'||c==='['){quote=c==='['?']':c;part+=c;continue;}\n  if(c==='('){depth++;part+=c;continue;}\n  if(c===')'){if(!depth){parts.push(part);break;}depth--;part+=c;continue;}\n  if(c===','&&!depth){parts.push(part);part='';}else part+=c;\n }\n return parts.filter(x=>!/^\\s*(CONSTRAINT|PRIMARY\\s+KEY|UNIQUE|CHECK|FOREIGN\\s+KEY)\\b/i.test(x)).map(x=>{\n  const m=x.trim().match(/^(?:\"((?:[^\"]|\"\")+)\"|`((?:[^`]|``)+)`|\\[([^\\]]+)\\]|'((?:[^']|'')+)'|([^\\s]+))/);\n  if(!m)throw Error('Spaltenname nicht lesbar.');return (m[1]??m[2]??m[3]??m[4]??m[5]).replace(/\"\"/g,'\"').replace(/``/g,'`').replace(/''/g,\"'\").toLowerCase();\n });\n}\n\nfunction readKobo(buffer){\n const db=new SQLiteReader(buffer),tables={};\n for(const row of db.rows(1))if(row[0]==='table')tables[String(row[1]).toLowerCase()]={root:row[3],sql:row[4]};\n if(!tables.bookmark||!tables.content)throw Error('Keine unterstützte Kobo-Datenbank: Bookmark oder content fehlt.');\n const bc=columnNames(tables.bookmark.sql),cc=columnNames(tables.content.sql);\n if(!bc.includes('volumeid')||(!bc.includes('text')&&!bc.includes('annotation'))||!cc.includes('contentid'))throw Error('Diese Kobo-Datenbankversion wird noch nicht unterstützt.');\n const field=(row,cols,name)=>row[cols.indexOf(name)]??'';\n const number=value=>{if(String(value).trim()==='')return null;const n=Number(value);return Number.isFinite(n)?n:null;};\n const meta=new Map();\n for(const r of db.rows(tables.content.root))meta.set(String(field(r,cc,'contentid')),{title:String(field(r,cc,'title')),author:String(field(r,cc,'attribution')),order:number(field(r,cc,'volumeindex'))});\n const groups=new Map(),seen=new Set();\n for(const r of db.rows(tables.bookmark.root)){\n  const get=k=>String(field(r,bc,k));\n  if(['true','1'].includes(get('hidden').trim().toLowerCase()))continue;\n  const text=get('text').trim(),note=get('annotation').trim();if(!text&&!note)continue;\n  const volume=get('volumeid'),cid=get('contentid'),created=get('datecreated'),bid=get('bookmarkid');\n  const id=JSON.stringify(bid?[volume,bid]:[volume,cid,created,text,note]);if(seen.has(id))continue;seen.add(id);\n  if(!groups.has(volume)){let fallback=volume.split('/').pop()||'Unbekanntes Buch';try{fallback=decodeURIComponent(fallback);}catch{}groups.set(volume,{id:volume,title:meta.get(volume)?.title||fallback,author:meta.get(volume)?.author||'',highlights:[]});}\n  // Resolve only exact chapter IDs or a fragment-free ID actually present in content.\n  let chapterID=cid;\n  if(!meta.has(chapterID)&&cid.includes('#')&&meta.has(cid.split('#')[0]))chapterID=cid.split('#')[0];\n  const cm=chapterID!==volume?meta.get(chapterID):null;\n  // Use an explicit page field on the bookmark only. Never infer a page from progress,\n  // offsets, content.NumPages, or a chapter-relative value.\n  const pageRaw=get('pagenumber').trim(), pageN=number(pageRaw);\n  const page=pageN!==null&&Number.isInteger(pageN)&&pageN>0?String(pageN):'';\n  const range=[get('startcontainerpath'),get('startoffset'),get('endcontainerpath'),get('endoffset')];\n  const rangeKey=cid&&range.every(x=>x!=='')?JSON.stringify([cid,...range]):'';\n  groups.get(volume).highlights.push({id,text,note,created,chapter:cm?.title||'',chapterKey:chapterID||'',chapterOrder:cm?.order??null,\n   contentID:cid,page,startPath:range[0],startOffset:number(range[1]),progress:number(get('chapterprogress')),\n   rangeKey,sourceIDs:[id],notes:note?[{text:note,created}]:[]});\n }\n const books=[...groups.values()].sort((a,b)=>a.title.localeCompare(b.title,'de'));\n for(const book of books){\n  // Some exports have a separate note-only row for exactly the same text range.\n  // Join only an unambiguous range match; never guess using date or nearby text.\n  const anchors=new Map();\n  for(const h of book.highlights)if(h.text&&h.rangeKey){if(!anchors.has(h.rangeKey))anchors.set(h.rangeKey,[]);anchors.get(h.rangeKey).push(h);}\n  const removed=new Set();\n  for(const h of book.highlights){\n   if(h.text||!h.note||!h.rangeKey)continue;\n   const matches=anchors.get(h.rangeKey)||[];\n   if(matches.length!==1)continue;\n   const target=matches[0];\n   if(!target.notes.some(n=>n.text===h.note&&n.created===h.created))target.notes.push({text:h.note,created:h.created});\n   target.note=target.notes.map(n=>n.text).join('\\n\\n');target.sourceIDs.push(h.id);removed.add(h.id);\n  }\n  book.highlights=book.highlights.filter(h=>!removed.has(h.id));\n }\n return {books,wal:db.b[18]===2||db.b[19]===2,diagnostics:{hasPageNumber:bc.includes('pagenumber'),positionColumns:bc.filter(name=>/page|progress|offset|container|location/i.test(name))}};\n}\n"+'\nonmessage=e=>{try{postMessage({ok:true,value:readKobo(e.data)})}catch(err){postMessage({ok:false,error:err.message})}};'],{type:'text/javascript'}));
@@ -413,7 +572,7 @@ $('file').onchange=async event=>{
   if(file.size>100*1024*1024)throw Error('Für diesen Prototyp sind maximal 100 MB pro Datenbank erlaubt.');
   const result=await parseAsync(await file.arrayBuffer());
   if(!result.books.length)throw Error('Keine sichtbaren Markierungen oder Notizen gefunden. Deine bisherige Bibliothek bleibt erhalten.');
-  const dissolved=acceptImport(result.books);importDiagnostics=result.diagnostics||null;mode='import';active=null;activeChapter=null;notesOnly=false;$('search').value='';
+  const dissolved=acceptImport(result.books);importDiagnostics=result.diagnostics||null;mode='import';active=null;activeChapter=null;entryFilter='all';$('search').value='';
   notify(dissolved?`${dissolved} Verbindung(en) konnten wegen geänderter oder fehlender Einträge nicht wiederhergestellt werden.`:'');save();
  }catch(err){notify('Import fehlgeschlagen: '+err.message);}finally{busy=false;$('progress').hidden=true;event.target.value='';render();}
 };
@@ -452,7 +611,8 @@ try{const raw=localStorage.getItem(STORE);if(raw){const s=JSON.parse(raw);if(!Ar
  seenBooks=new Set([...(Array.isArray(s.seenBooks)?s.seenBooks:[]),...books.map(b=>b.id)]);
  selectedBooks=new Set((Array.isArray(s.selectedBooks)?s.selectedBooks:[]).filter(id=>books.some(b=>b.id===id)));
  newBooks=new Set((Array.isArray(s.newBooks)?s.newBooks:[]).filter(id=>books.some(b=>b.id===id)));
-}notify('');}}catch{books=[];excluded.clear();selectedBooks.clear();seenBooks.clear();newBooks.clear();notify('Lokale Speicherung nicht verfügbar oder ungültig. Bitte importiere die Daten erneut.');}
+ favorites=new Set((Array.isArray(s.favorites)?s.favorites:[]).filter(id=>typeof id==='string'));
+}notify('');}}catch{books=[];excluded.clear();selectedBooks.clear();seenBooks.clear();newBooks.clear();favorites.clear();notify('Lokale Speicherung nicht verfügbar oder ungültig. Bitte importiere die Daten erneut.');}
 render();
 if(typeof ResizeObserver!=='undefined'){new ResizeObserver(syncActionBar).observe($('actionBar'));}
 window.addEventListener('resize',syncActionBar);syncActionBar();
