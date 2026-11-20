@@ -1,21 +1,26 @@
-# Browser-Version 7 – kompaktere Ansicht
+# Browser-Version 9 – Bücher zusammenführen
 
-## Öffnen
-KoboNotes_Browser_v7.html wie bisher im Browser öffnen. Im Hosting-ZIP liegt dieselbe Datei als index.html. Vor dem Wechsel wichtige Exporte sichern: Bei unterschiedlichen lokalen HTML-Dateien kann der Browser getrennten Speicher verwenden. Der bisherige Speicherschlüssel bleibt kompatibel; ggf. Datenbank erneut importieren.
+## Bedienung
+1. Auf der Hauptseite mindestens zwei Bücher über ihre Buchsymbole auswählen.
+2. Unten „Bücher zusammenführen“ wählen.
+3. Titel und Autor jeweils aus einer Quelle auswählen. Unterschiedliche Angaben müssen ausdrücklich gewählt werden; identische Angaben sind vorgewählt. Titel und Autor dürfen aus verschiedenen Quellen stammen.
+4. Vorschau prüfen und „Akzeptieren“ drücken. Abbrechen verändert nichts.
+5. Die ursprünglichen Steckbriefe werden lokal durch einen gemeinsamen ersetzt. Alle Einträge bleiben erhalten, einschließlich ausgeschlossener Einträge, Textnotizen, Datumsangaben und Favoriten.
+6. Im gemeinsamen Steckbrief kann „Zusammenführung lösen“ die ursprünglichen Bücher wiederherstellen.
 
-## Änderungen
-- Sichtbares App-Branding, Versionsbanner und großer Einführungstext entfernt.
-- Schlanker Titelbereich: „Bücher“ mit Bücherzahl auf der Hauptseite; Buchtitel und eine kleine Autorenzeile im Buch. Lange Titel werden einzeilig gekürzt; der vollständige Text bleibt im HTML und als Tooltip verfügbar.
-- Feste untere Leiste auf eine Zeile reduziert. Auf dem Mac sind die Aktionen nebeneinander sichtbar. Auf schmalen Displays ist der Werkzeugbereich horizontal wischbar; Exportieren bleibt rechts fest erreichbar. Nicht alle Aktionen passen gleichzeitig auf ein iPhone. Die Schaltflächen behalten mindestens 44 Pixel Höhe. Die Leiste ist ohne iPhone-Sicherheitsabstand ungefähr 52–56 CSS-Pixel hoch.
-- „Mit eigener Notiz“ liegt jetzt unten zwischen Gesamtauswahl und Verbinden. Im Buch ggf. in der unteren Werkzeugleiste seitlich wischen, um den Knopf zu erreichen.
-- Kürzere Verbinden-Beschriftung („Verbinden“, aktiv „Beenden“), unveränderte Vorschau und Rückgängigmachen. Auswahlzähler und Alle auswählen/abwählen bleiben unten.
-- Gesamtmarkierungszahl steht ganz oben in der Kapitelübersicht, vor Überschrift und Kapitelzeilen. Eigenständige Notizen werden weiter gesondert genannt. Zusammenführen verändert die ursprüngliche Markierungsanzahl nicht.
-- Bücher als responsives Kartenraster: mehrere Karten nebeneinander am Mac, zwei auf mittleren Breiten und eine auf sehr schmalen Displays. Buchsymbol wählt aus; Titelbereich öffnet das Buch.
-- Kapitelübersicht rechts bleibt erhalten; auf schmalen Displays oben, jetzt maximal 180 Pixel hoch und intern scrollbar.
+## Stammdaten und Quellen
+Die aktuelle App liest Titel und Autor; nur diese Felder werden abgeglichen. Quell-IDs bleiben intern erhalten. ISBN, Verlag, Sprache und Cover werden nicht erfunden.
+Kapitel bleiben nach Quellbuch getrennt, auch bei gleichen Titeln. Quelle wird im Kapiteltitel der Übersicht und im Markdown sowie klein in den Zitaten angezeigt. Alle Zitate werden übernommen; gleiche Textpassagen aus verschiedenen Ausgaben werden nicht automatisch gelöscht. Identische doppelte Eintrags-IDs werden als Konflikt abgelehnt.
+Bestehende Zitatverbindungen bleiben erhalten. Einzelzitate können nicht über Quellbuchgrenzen hinweg verbunden werden. Bereits zusammengeführte Bücher können mit weiteren Büchern zusammengeführt werden; Auflösen stellt alle ursprünglichen Quellen her.
+Die bisherige Buchauswahl aktiviert beim Auswählen eines ganzen Buchs dessen Einträge. Dies ist unverändert; Zusammenführen selbst verändert Eintragsausschlüsse nicht. Der neue Steckbrief ist für den Sammel-Export ausgewählt.
 
-## Bedienung bleibt erhalten
-Kapitel anklicken filtert Markierungen; Zurück setzt Kapitel-/Such-/Notizfilter zurück. Alle auswählen/abwählen gilt weiterhin für das gesamte Buch bzw. die gesamte Bibliothek, nicht nur die gefilterten Treffer. Der Export richtet sich nach der gesamten Auswahl. Einzelne Karten werden per Klick farbig ausgewählt. Verbinden verwendet eine gesonderte Auswahl. Importhistorie und Neu-Kennzeichnung bleiben erhalten.
+## Speichern und erneuter Import
+Gruppen, gewählte Stammdaten und Originalquellen werden lokal im bisherigen Browserspeicher gespeichert. Die gewählten Titel-/Autorwerte werden bei erneutem Import nicht ungefragt überschrieben.
+Beim erneuten Import werden alle Quellen aktualisiert und die Gruppe wiederhergestellt, wenn sämtliche Quell-IDs vorhanden sind. Neue Zitate kommen hinzu. Fehlt eine Quelle, wird die Gruppe aufgelöst und eine Warnung über nicht wiederhergestellte Verbindungen angezeigt. Zitate fehlender Quellen werden nicht als alte Kopien behalten.
+Speicherfehler beim Akzeptieren oder Auflösen setzen den jeweiligen Änderungsschritt zurück. Browserbereinigung entfernt die gespeicherten Gruppen. Keine Synchronisierung zwischen Geräten. Quelldatei auf dem Kobo unverändert.
 
-## Daten und Tests
-Keine Änderung an der Kobo-Quelldatei und keine Daten-Uploads. Bestehende Import-/Seiten-/Speichergrenzen bleiben bestehen, einschließlich fehlender Verarbeitung separater WAL-/SHM-Dateien.
-Automatisierte Logiktests mit synthetischer SQLite-Datenbank bestanden: Import, Buch-/Eintragsauswahl, Gesamtzahl oberhalb der Kapitel, Filter/Zurück, Notizfilter, Verbinden/Auflösen, Markdown und Speicherung. HTML-IDs, DOM-Verweise und Platzierung aller Aktionsknöpfe geprüft. Tests verwenden ein simuliertes DOM; das Layout wurde nicht in Safari oder auf einem echten iPhone visuell getestet. Bitte insbesondere die seitlich wischbare untere Werkzeugleiste auf dem iPhone prüfen.
+## Start und Hosting
+KoboNotes_Browser_v9.html öffnen. Für GitHub Pages index.html aus dem Hosting-ZIP im vorhandenen Repository ersetzen. Keine persönliche Kobo-Datenbank hochladen. Unterschiedliche lokale HTML-Dateien können getrennten Browserspeicher haben. Vor Updates wichtige Exporte sichern; möglichst dieselbe HTTPS-Adresse weiterverwenden.
+
+## Teststatus
+JavaScript-Syntax und automatisierte Tests bestanden: Stammdatenwahl, Akzeptieren/Abbrechen, Quellen/Kapitel, Erhalt der Zitate und Notizen, Favoriten/Ausschlüsse, Speichern/Laden, erneuter Import, fehlende Quelle, Auflösen, Speicherfehler und bestehende Zitatverbindungen. HTML-IDs/DOM-Verweise geprüft. UI-Tests mit simuliertem DOM, kein visueller Safari-/iPhone-Test. Keine Prüfung deiner persönlichen Datenbank. Bisherige Grenzen bezüglich SQLite-Snapshots/WAL und Seitenangaben bleiben bestehen.
